@@ -70,20 +70,6 @@ class _MyHomePageState extends State<MyHomePage>
     super.dispose();
   }
 
-  Widget _textField() {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: TextField(
-        onChanged: _searchBloc.searchEvent.add,
-        decoration: InputDecoration(
-          border: OutlineInputBorder(),
-          hintText: "Digite o nome do repositório",
-          labelText: "Pesquisa",
-        ),
-      ),
-    );
-  }
-
   Widget _items(SynopsisItem item) {
     print("teste");
 
@@ -112,7 +98,6 @@ class _MyHomePageState extends State<MyHomePage>
       ),
       body: ListView(
         children: <Widget>[
-          _textField(),
           StreamBuilder<SynopsisResult>(
             stream: _searchBloc.apiResultFlux,
             builder:
