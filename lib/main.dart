@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:panini/blocs/Synopsisbloc.dart';
+import 'package:panini/details/DetailsWidget.dart';
+import 'package:panini/models/SynopsisResult.dart';
+import 'package:panini/models/SynopsisItem.dart';
 
 void main() {
   runApp(MyApp());
@@ -49,69 +54,84 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _MyHomePageState extends State<MyHomePage>
+{
+  SynopsisBloc _searchBloc;
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
+  @override
+  void initState() {
+    _searchBloc = SynopsisBloc();
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _searchBloc?.dispose();
+    super.dispose();
+  }
+
+  Widget _textField() {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: TextField(
+        onChanged: _searchBloc.searchEvent.add,
+        decoration: InputDecoration(
+          border: OutlineInputBorder(),
+          hintText: "Digite o nome do repositório",
+          labelText: "Pesquisa",
+        ),
+      ),
+    );
+  }
+
+  Widget _items(SynopsisItem item) {
+    print("teste");
+
+    return ListTile(
+      leading: Hero(
+        tag: item.title,
+      ),
+      title: Text(item?.title ?? "title"),
+      subtitle: Text(item?.year ?? "year"),
+      onTap: () => Navigator.push(
+            context,
+            CupertinoPageRoute(
+              builder: (context) => DetailsWidget(
+                    item: item,
+                  ),
+            ),
+          ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        title: Text("Github Search"),
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
-            ),
-          ],
-        ),
+      body: ListView(
+        children: <Widget>[
+          _textField(),
+          StreamBuilder<SynopsisResult>(
+            stream: _searchBloc.apiResultFlux,
+            builder:
+                (BuildContext context, AsyncSnapshot<SynopsisResult> snapshot) {
+              return snapshot.hasData
+                  ? ListView.builder(
+                      shrinkWrap: true,
+                      physics: ClampingScrollPhysics(),
+                      itemCount: snapshot.data.items.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        SynopsisItem item = snapshot.data.items[index];
+                        return _items(item);
+                      },
+                    )
+                  : Center(child: CircularProgressIndicator());
+            },
+          )
+        ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
